@@ -13,7 +13,8 @@
 ## Using
 
 * Download for Linux ( 64 bit ) from [here](binaries/cms_notifs_linux).
-* Run the downloaded executable.
+* Make the downloaded file executable ( `chmod +x /path/to/downloaded/file` )
+* Run the downloaded executable. ( ` ./path/to/downloaded/file` )
 * Fill in the required config details asked.
 * It will run in the background.
 
