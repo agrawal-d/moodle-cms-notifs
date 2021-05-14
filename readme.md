@@ -1,6 +1,7 @@
 # Moodle CMS Notifications
 
 * View unread Moodle CMS notifications. 
+* Mark all notifications as read.
 * Lightweight with no dependencies.
 * Cross platform.
 * Authentication using tokens, so should be secure.
@@ -17,6 +18,10 @@
 * Run the downloaded executable. ( ` ./path/to/downloaded/file` )
 * Fill in the required config details asked.
 * It will run in the background.
+
+Launch with `--settings` command line argument to open the settings dialog.
+
+![Settings](images/settings.png)
 
 ## Compile from source
 

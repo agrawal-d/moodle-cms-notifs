@@ -3,6 +3,11 @@ name = "cms_notifs"
 version = "0.1.0"
 authors = ["Divyanshu Agrawal <agrawal.divyanshu@outlook.com>"]
 edition = "2018"
+description = "Read your latest unread notifications from Moodle"
+homepage = "https://github.com/agrawal-d/moodle-cms-notifs/"
+repository = "https://github.com/agrawal-d/moodle-cms-notifs/"
+license = "GPL-3.0-or-later"
+keywords = ["moodle", "cms", "gui"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

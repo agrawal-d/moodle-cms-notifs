@@ -8,10 +8,9 @@ use web_view::*;
 use webbrowser;
 
 mod api;
-mod gui;
 
-static CONFIG_STORE_LOCATION: &str = ".cms_notifs.json";
-static DEFAULT_MOODLE_LOCATION: &str = "https://cms.bits-hyderabad.ac.in";
+static CONFIG_STORE_LOCATION: &str = ".cms_notifs.json"; // The location where the config is stored.
+static DEFAULT_MOODLE_LOCATION: &str = "https://cms.bits-hyderabad.ac.in"; // The autofilled Moodle endpoint.
 
 /// Application configuration.
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -33,13 +32,14 @@ pub struct Notification {
     pub id: u64,
     pub subject: String,
     pub contexturl: String,
+    pub useridto: u32,
     pub timecreatedpretty: String,
 }
 
 impl Config {
     /// Retrieve configuration from JSON file.
     /// If it does not exists, or is corrupted, create a new configuration.
-    fn retrieve() -> Config {
+    pub fn retrieve() -> Config {
         let config_exists = Path::new(&Config::get_config_path()).exists();
         let initial_config = Config::get_initial_config();
         if !config_exists {
@@ -80,7 +80,7 @@ impl Config {
     }
 
     /// Open a webview to ask for config values.
-    fn setup_config(base_config: Option<Config>) -> Config {
+    pub fn setup_config(base_config: Option<Config>) -> Config {
         let config;
         if let Some(got_config) = base_config {
             config = got_config
@@ -104,7 +104,8 @@ impl Config {
         <label>Moodle URL:<br/><input id='mdl-url' value='{}' /></label>
         <br/>
         <label>Authentication token:<br/><input id='mdl-token' value='{}' /></label>
-        <p>You can generate authentication token by visiting CMS > Preferences > User Account > Security Keys.</p>
+        <p>You can generate authentication token by visiting CMS > Preferences > User Account > Security Keys. Use the 'Moodle mobile web service' token.</p>
+
         <br/>
         <button onclick='save()'>Save</button>
         </body>
@@ -138,7 +139,16 @@ impl Config {
 
 /// Open a webview to show the notifications.
 pub fn display_notifications(notifications: Notifications, config: &Config) {
+    if notifications.unreadcount == 0 {
+        println!("0 unread notifications");
+        return;
+    }
+
     let mut notification_list_gen = String::from("");
+    let my_user_id: u32 = match notifications.notifications.get(0) {
+        Some(notif) => notif.useridto,
+        None => 0,
+    };
 
     for notif in notifications.notifications.iter() {
         let curr_notif = format!(
@@ -184,7 +194,8 @@ pub fn display_notifications(notifications: Notifications, config: &Config) {
                     Config::setup_config(Some(config.clone()));
                 }
                 "mark_read" => {
-                    api::mark_all_as_read(config).expect("Fuck");
+                    api::mark_all_as_read(config, my_user_id)
+                        .expect("Could not mark notifications as read");
                 }
                 other => {
                     eprintln!("Unexpected command from webview {}", other);
@@ -234,7 +245,7 @@ pub fn display_errors(config: &Config, err: Box<dyn std::error::Error>) {
 /// Run the application in a loop.
 /// Fetches and displays notifications every 15 minutes.
 pub fn run() -> Result<(), Box<dyn std::error::Error>> {
-    let duration = std::time::Duration::from_secs(60 * 15); // 15 minutes
+    let duration = std::time::Duration::from_secs(60 * 10); // 15 minutes
 
     loop {
         let config = Config::retrieve();
