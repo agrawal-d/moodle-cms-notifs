@@ -36,25 +36,17 @@ pub struct Notification {
     pub timecreatedpretty: String,
 }
 
-/// Get thhe path where the config file should be saved.
-fn get_config_path() -> String {
-    let home_dir = home::home_dir().unwrap();
-    let config_path = home_dir.join(CONFIG_STORE_LOCATION);
-    let config_path_raw = config_path.to_str().unwrap();
-    String::from(config_path_raw)
-}
-
 impl Config {
     /// Retrieve configuration from JSON file.
     /// If it does not exists, or is corrupted, create a new configuration.
     fn retrieve() -> Config {
-        let config_exists = Path::new(&get_config_path()).exists();
+        let config_exists = Path::new(&Config::get_config_path()).exists();
         let initial_config = Config::get_initial_config();
         if !config_exists {
             Config::setup_config(Some(initial_config))
         } else {
             let config_raw =
-                fs::read_to_string(&get_config_path()).expect("Unable to read config file");
+                fs::read_to_string(&Config::get_config_path()).expect("Unable to read config file");
             if let Ok(config) = serde_json::from_str(&config_raw) {
                 config
             } else {
@@ -75,7 +67,16 @@ impl Config {
     /// Store config to disk.
     fn store(config: &Config) {
         let serialized = serde_json::to_string(config).expect("Unable to serialize config.");
-        fs::write(&get_config_path(), serialized).expect("Failed to write configuration to disk.");
+        fs::write(&Config::get_config_path(), serialized)
+            .expect("Failed to write configuration to disk.");
+    }
+
+    /// Get thhe path where the config file should be saved.
+    fn get_config_path() -> String {
+        let home_dir = home::home_dir().unwrap();
+        let config_path = home_dir.join(CONFIG_STORE_LOCATION);
+        let config_path_raw = config_path.to_str().unwrap();
+        String::from(config_path_raw)
     }
 
     /// Open a webview to ask for config values.
@@ -100,9 +101,9 @@ impl Config {
         external.invoke(JSON.stringify(config));
         }}
         </script>
-        <label>Moodle URL: <input id='mdl-url' value='{}' /></label>
+        <label>Moodle URL:<br/><input id='mdl-url' value='{}' /></label>
         <br/>
-        <label>Authentication token: <input id='mdl-token' value='{}' /></label>
+        <label>Authentication token:<br/><input id='mdl-token' value='{}' /></label>
         <p>You can generate authentication token by visiting CMS > Preferences > User Account > Security Keys.</p>
         <br/>
         <button onclick='save()'>Save</button>
@@ -158,8 +159,9 @@ pub fn display_notifications(notifications: Notifications, config: &Config) {
     </script>
     <h3>{} unread notifications</h3>
     <p>
+    <button onclick=\"external.invoke('mark_read _')\">Mark as read</button>
     <button onclick='openurl(\"{}\")'>Open CMS</button>
-    <button onclick=\"external.invoke('settings nodata')\">Settings</button>
+    <button onclick=\"external.invoke('settings _')\">Settings</button>
     </p>
     <ul>{}</ul></body></html>",
         notifications.unreadcount, config.moodle_location, notification_list_gen
@@ -181,6 +183,9 @@ pub fn display_notifications(notifications: Notifications, config: &Config) {
                 "settings" => {
                     Config::setup_config(Some(config.clone()));
                 }
+                "mark_read" => {
+                    api::mark_all_as_read(config).expect("Fuck");
+                }
                 other => {
                     eprintln!("Unexpected command from webview {}", other);
                 }
@@ -193,10 +198,15 @@ pub fn display_notifications(notifications: Notifications, config: &Config) {
 }
 
 /// Open a webview to show an error message.
-pub fn display_errors(err: Box<dyn std::error::Error>) {
+pub fn display_errors(config: &Config, err: Box<dyn std::error::Error>) {
     let error_message = (*err).to_string();
     let html_content = format!(
-        "<h1>Error</h1><pre>{}</pre><br/>The application will keep running despite the error.",
+        "<script>
+        window.external={{invoke:function(x){{window.webkit.messageHandlers.external.postMessage(x);}}}};
+        </script>
+        <h1>Error</h1>
+        <button onclick=\"external.invoke('settings _')\">Settings</button>
+        <pre>{}</pre><br/>Errors can happen if you provided an invalid authentication token, or if Moodle is unreachable.",
         error_message
     );
     web_view::builder()
@@ -205,23 +215,38 @@ pub fn display_errors(err: Box<dyn std::error::Error>) {
         .size(400, 400)
         .resizable(false)
         .user_data(())
-        .invoke_handler(|_webview, _arg| Ok(()))
+        .invoke_handler(|_webview, arg| {
+            let (command, _data) = split_once(arg);
+            match command {
+                "settings" => {
+                    Config::setup_config(Some(config.clone()));
+                }
+                other => {
+                    eprintln!("Unexpected command from webview {}", other);
+                }
+            }
+            Ok(())
+        })
         .run()
         .unwrap();
 }
 
 /// Run the application in a loop.
 /// Fetches and displays notifications every 15 minutes.
-pub async fn run() -> Result<(), Box<dyn std::error::Error>> {
+pub fn run() -> Result<(), Box<dyn std::error::Error>> {
     let duration = std::time::Duration::from_secs(60 * 15); // 15 minutes
 
     loop {
         let config = Config::retrieve();
-        let notifs = get_notifications(&config).await;
+        let notifs = get_notifications(&config);
 
         match notifs {
-            Ok(notifs) => display_notifications(notifs, &config),
-            Err(e) => display_errors(e),
+            Ok(notifs) => {
+                display_notifications(notifs, &config);
+            }
+            Err(e) => {
+                display_errors(&config, e);
+            }
         };
 
         println!("Sleeping for 15 minutes.");
