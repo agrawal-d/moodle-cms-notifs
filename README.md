@@ -11,6 +11,8 @@
 
 ![Screenshot](images/main.png)
 
+**If you have `cargo` installed**, install this application directly using `cargo install cms_notifs` and launch it by running the command `cms_notifs`.
+
 ## Using
 
 * Download for Linux ( 64 bit ) from [here](binaries/cms_notifs_linux).

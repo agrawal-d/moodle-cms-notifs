@@ -1,6 +1,6 @@
 [package]
 name = "cms_notifs"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Divyanshu Agrawal <agrawal.divyanshu@outlook.com>"]
 edition = "2018"
 description = "Read your latest unread notifications from the Moodle CMS"
