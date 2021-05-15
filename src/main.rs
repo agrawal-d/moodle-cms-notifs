@@ -1,22 +1,55 @@
 //! Read your latest unread notifications from Moodle.
 
+#[macro_use]
+extern crate log;
+extern crate simplelog;
+
+use simplelog::*;
+
+use cms_notifs;
 use cms_notifs::run;
-use cms_notifs::Config;
+use home;
 use std::env;
+use std::fs::File;
 
 // Process the command line arguments.
 fn process_cli_args() {
     let args: Vec<String> = env::args().collect();
 
     if args.len() == 2 && args[1] == "--settings" {
-        Config::setup_config(Some(Config::retrieve()));
+        cms_notifs::Config::setup_config(Some(cms_notifs::Config::retrieve()));
         std::process::exit(0);
     } else {
         println!("Note: You can run with --settings argument to open the settings dialog.");
     }
 }
 
+// Configure logging to a file.
+fn setup_logging() {
+    static LOGS_STORE_LOCATION: &str = ".cms_notifs.log"; // The location where the config is stored.
+    let home_dir = home::home_dir().unwrap();
+    let log_dir = home_dir.join(LOGS_STORE_LOCATION);
+    let log_path_raw = log_dir.to_str().unwrap();
+
+    CombinedLogger::init(vec![
+        TermLogger::new(
+            LevelFilter::Info,
+            Config::default(),
+            TerminalMode::Mixed,
+            ColorChoice::Auto,
+        ),
+        WriteLogger::new(
+            LevelFilter::Info,
+            Config::default(),
+            File::create(log_path_raw).unwrap(),
+        ),
+    ])
+    .unwrap();
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    setup_logging();
     process_cli_args();
+    info!("CMS Notifications started");
     run()
 }

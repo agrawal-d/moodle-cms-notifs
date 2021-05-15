@@ -1,3 +1,7 @@
+#[macro_use]
+extern crate log;
+extern crate simplelog;
+
 use crate::api::get_notifications;
 use home;
 use serde::{Deserialize, Serialize};
@@ -139,8 +143,8 @@ impl Config {
 /// Open a webview to show the notifications.
 pub fn display_notifications(notifications: Notifications, config: &Config) {
     if notifications.unreadcount == 0 {
-        println!("0 unread notifications");
-        // return;
+        info!("0 unread notifications");
+        return;
     }
 
     let mut notification_list_gen = String::from("");
@@ -205,6 +209,8 @@ pub fn display_notifications(notifications: Notifications, config: &Config) {
 /// Open a webview to show an error message.
 pub fn display_errors(config: &Config, err: Box<dyn std::error::Error>) {
     let error_message = (*err).to_string();
+    error!("{}", error_message);
+
     let html_stub = format!(
         "
         <h1>Error</h1>
@@ -253,7 +259,7 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
             }
         };
 
-        println!("Sleeping for 15 minutes.");
+        info!("Sleeping for 15 minutes.");
         std::thread::sleep(duration);
     }
 }

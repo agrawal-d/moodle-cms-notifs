@@ -25,6 +25,8 @@ pub fn get_notifications(config: &Config) -> Result<Notifications, Box<dyn Error
     let notifications: Result<Notifications, _> =
         serde_json::from_str(&req).or_else(|err| Err(Box::new(err) as Box<dyn std::error::Error>));
 
+    info!("Fetched notifications from server");
+
     notifications
 }
 
@@ -38,7 +40,7 @@ pub fn mark_all_as_read(config: &Config, my_user_id: u32) -> Result<String, Box<
         .or_else(|err| Err(Box::new(err) as Box<dyn std::error::Error>));
 
     if let Ok(text) = &res {
-        println!("Mark as read server response: {}", text);
+        info!("Mark as read server response: {}", text);
     };
 
     res
