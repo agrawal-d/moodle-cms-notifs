@@ -4,7 +4,8 @@ use cms_notifs::run;
 use cms_notifs::Config;
 use std::env;
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+// Process the command line arguments.
+fn process_cli_args() {
     let args: Vec<String> = env::args().collect();
 
     if args.len() == 2 && args[1] == "--settings" {
@@ -13,6 +14,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     } else {
         println!("Note: You can run with --settings argument to open the settings dialog.");
     }
+}
 
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    process_cli_args();
     run()
 }
