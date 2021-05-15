@@ -1,5 +1,7 @@
+// Add boilerplate to HTML stubs.
 pub fn complete_html(stub: &str) -> String {
     format!("
+        <!DOCTYPE html>
         <html>
         <head>
         <script>
@@ -7,7 +9,8 @@ pub fn complete_html(stub: &str) -> String {
             window.external={{invoke:function(x){{window.webkit.messageHandlers.external.postMessage(x);}}}};
         }}
         function sendMessage(command,data){{
-            const message = command + \" \" + JSON.stringify(data);
+            if(data===undefined){{data=''}}
+            const message = command + \" \" + data;
             external.invoke(message);
         }}
         </script>
@@ -15,6 +18,10 @@ pub fn complete_html(stub: &str) -> String {
         body {{
             font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\";
           }}
+        input{{
+            display:block;
+            width:80%;
+        }}
         </style>
         </head>
         <body>

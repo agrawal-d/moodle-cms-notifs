@@ -8,18 +8,19 @@ use web_view::*;
 use webbrowser;
 
 mod api;
+mod html;
 
 static CONFIG_STORE_LOCATION: &str = ".cms_notifs.json"; // The location where the config is stored.
 static DEFAULT_MOODLE_LOCATION: &str = "https://cms.bits-hyderabad.ac.in"; // The autofilled Moodle endpoint.
 
-/// Application configuration.
+/// Application configuration format.
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Config {
     pub moodle_location: String,
     pub token: String,
 }
 
-/// The representation of the notification object returned by Moodle.
+/// The representation of the notification objects returned by Moodle.
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Notifications {
     pub notifications: Vec<Notification>,
@@ -88,29 +89,26 @@ impl Config {
             config = Config::get_initial_config()
         };
 
-        let html_content = format!("
-        <!doctype html>
-        <html>
-        <body>
-        <script>
-        window.external={{invoke:function(x){{window.webkit.messageHandlers.external.postMessage(x);}}}};
-        function save(){{
-        const moodle_location = document.getElementById('mdl-url').value;
-        const token = document.getElementById('mdl-token').value;
-        const config = {{moodle_location, token}};
-        external.invoke(JSON.stringify(config));
-        }}
-        </script>
-        <label>Moodle URL:<br/><input id='mdl-url' value='{}' /></label>
-        <br/>
-        <label>Authentication token:<br/><input id='mdl-token' value='{}' /></label>
-        <p>You can generate authentication token by visiting CMS > Preferences > User Account > Security Keys. Use the 'Moodle mobile web service' token.</p>
-
-        <br/>
-        <button onclick='save()'>Save</button>
-        </body>
-        </html>
+        let html_stub = format!(
+            "
+            <script>
+            function save(){{
+                const moodle_location = document.getElementById('mdl-url').value;
+                const token = document.getElementById('mdl-token').value;
+                const config = {{moodle_location, token}};
+                sendMessage('config', JSON.stringify(config));
+            }}
+            </script>
+            <label>Moodle URL:<br/><input id='mdl-url' value='{}' /></label>
+            <br/>
+            <label>Authentication token:<br/><input id='mdl-token' value='{}' /></label>
+            <br/>
+            <small>You can generate authentication token by visiting CMS > Preferences > User Account > Security Keys. Use the 'Moodle mobile web service' token.</small>
+            <br/>
+            <button onclick='save()'>Save</button>
         ",config.moodle_location, config.token);
+
+        let html_content = html::complete_html(&html_stub);
 
         web_view::builder()
             .title("CMS Notifications Configuration")
@@ -121,7 +119,8 @@ impl Config {
             .user_data(())
             .invoke_handler(|webview, arg| match arg {
                 _ => {
-                    let mut config: Config = serde_json::from_str(&arg).unwrap();
+                    let (_command, data) = split_once(arg);
+                    let mut config: Config = serde_json::from_str(data).unwrap();
                     if config.moodle_location.ends_with('/') {
                         config.moodle_location.pop();
                     }
@@ -141,7 +140,7 @@ impl Config {
 pub fn display_notifications(notifications: Notifications, config: &Config) {
     if notifications.unreadcount == 0 {
         println!("0 unread notifications");
-        return;
+        // return;
     }
 
     let mut notification_list_gen = String::from("");
@@ -152,34 +151,29 @@ pub fn display_notifications(notifications: Notifications, config: &Config) {
 
     for notif in notifications.notifications.iter() {
         let curr_notif = format!(
-            "<li><p><b>{}</b> <br/><small>{}</small></p><a href='#' onclick='openurl(\"{}\")'>View</a></li>",
+            "<li><p><b>{}</b> <br/><small>{}</small></p><a href='#' onclick=\"sendMessage('url','{}')\">View</a></li>",
             notif.subject, notif.timecreatedpretty,notif.contexturl
         );
         notification_list_gen.push_str(&curr_notif);
     }
 
-    let notification_list_html = format!(
-    "<html><body>
-    <script>
-    window.external={{invoke:function(x){{window.webkit.messageHandlers.external.postMessage(x);}}}};
-    function openurl(link){{
-        external.invoke('url ' + link);
-    }}
-
-    </script>
-    <h3>{} unread notifications</h3>
-    <p>
-    <button onclick=\"external.invoke('mark_read _')\">Mark as read</button>
-    <button onclick='openurl(\"{}\")'>Open CMS</button>
-    <button onclick=\"external.invoke('settings _')\">Settings</button>
-    </p>
-    <ul>{}</ul></body></html>",
+    let notification_list_html_stub = format!(
+        "
+        <h3>{} unread notifications</h3>
+        <p>
+        <button onclick=\"sendMessage('mark_read')\">Mark as read</button>
+        <button onclick=\"sendMessage('url','{}')\">Open CMS</button>
+        <button onclick=\"sendMessage('settings')\">Settings</button>
+        </p>
+        <ul>{}</ul></body></html>",
         notifications.unreadcount, config.moodle_location, notification_list_gen
     );
 
+    let html_content = html::complete_html(&notification_list_html_stub);
+
     web_view::builder()
         .title("CMS Notifications")
-        .content(Content::Html(notification_list_html))
+        .content(Content::Html(&html_content))
         .size(420, 800)
         .resizable(false)
         .user_data(())
@@ -211,15 +205,14 @@ pub fn display_notifications(notifications: Notifications, config: &Config) {
 /// Open a webview to show an error message.
 pub fn display_errors(config: &Config, err: Box<dyn std::error::Error>) {
     let error_message = (*err).to_string();
-    let html_content = format!(
-        "<script>
-        window.external={{invoke:function(x){{window.webkit.messageHandlers.external.postMessage(x);}}}};
-        </script>
+    let html_stub = format!(
+        "
         <h1>Error</h1>
-        <button onclick=\"external.invoke('settings _')\">Settings</button>
+        <button onclick=\"sendMessage('settings')\">Settings</button>
         <pre>{}</pre><br/>Errors can happen if you provided an invalid authentication token, or if Moodle is unreachable.",
         error_message
     );
+    let html_content = html::complete_html(&html_stub);
     web_view::builder()
         .title("CMS Notifications Error")
         .content(Content::Html(html_content))

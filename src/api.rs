@@ -38,7 +38,7 @@ pub fn mark_all_as_read(config: &Config, my_user_id: u32) -> Result<String, Box<
         .or_else(|err| Err(Box::new(err) as Box<dyn std::error::Error>));
 
     if let Ok(text) = &res {
-        println!("Mark as read: {}", text);
+        println!("Mark as read server response: {}", text);
     };
 
     res
