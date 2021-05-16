@@ -20,7 +20,7 @@ fn process_cli_args() {
         cms_notifs::Config::setup_config(Some(cms_notifs::Config::retrieve()));
         std::process::exit(0);
     } else {
-        println!("Note: You can run with --settings argument to open the settings dialog.");
+        info!("Note: You can run with --settings argument to open the settings dialog.");
     }
 }
 
