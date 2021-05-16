@@ -22,12 +22,18 @@ pub fn get_notifications(config: &Config) -> Result<Notifications, Box<dyn Error
     let req = reqwest::blocking::get(endpoint)?
         .text()
         .or_else(|err| Err(Box::new(err) as Box<dyn std::error::Error>))?;
-    let notifications: Result<Notifications, _> =
-        serde_json::from_str(&req).or_else(|err| Err(Box::new(err) as Box<dyn std::error::Error>));
+    trace!("get_notifications {}", req);
+    let mut notifications: Notifications = (serde_json::from_str(&req)
+        .or_else(|err| Err(Box::new(err) as Box<dyn std::error::Error>)))?;
 
     info!("Fetched notifications from server");
 
+    // Discard old (read) notifications.
     notifications
+        .notifications
+        .truncate(notifications.unreadcount);
+
+    Ok(notifications)
 }
 
 /// Mark all notifications are read.
@@ -40,7 +46,7 @@ pub fn mark_all_as_read(config: &Config, my_user_id: u32) -> Result<String, Box<
         .or_else(|err| Err(Box::new(err) as Box<dyn std::error::Error>));
 
     if let Ok(text) = &res {
-        info!("Mark as read server response: {}", text);
+        trace!("mark_all_as_read {}", text);
     };
 
     res

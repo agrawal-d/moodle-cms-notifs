@@ -28,7 +28,7 @@ pub struct Config {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Notifications {
     pub notifications: Vec<Notification>,
-    pub unreadcount: u32,
+    pub unreadcount: usize,
 }
 
 /// A notification object.
@@ -36,8 +36,9 @@ pub struct Notifications {
 pub struct Notification {
     pub id: u64,
     pub subject: String,
-    pub contexturl: String,
+    pub contexturl: Option<String>,
     pub useridto: u32,
+    pub text: Option<String>,
     pub timecreatedpretty: String,
 }
 
@@ -154,9 +155,21 @@ pub fn display_notifications(notifications: Notifications, config: &Config) {
     };
 
     for notif in notifications.notifications.iter() {
+        let url = if let Some(link) = &notif.contexturl {
+            link
+        } else {
+            &config.moodle_location
+        };
+
+        let details = if let Some(text) = &notif.text {
+            text
+        } else {
+            "Open to view more details"
+        };
+
         let curr_notif = format!(
-            "<li><p><b>{}</b> <br/><small>{}</small></p><a href='#' onclick=\"sendMessage('url','{}')\">View</a></li>",
-            notif.subject, notif.timecreatedpretty,notif.contexturl
+            "<li><details><summary><b>{}</b><br/><small>{}</small></summary><p>{}<p></details><a href='#' onclick=\"sendMessage('url','{}')\">View</a></li>",
+            notif.subject, notif.timecreatedpretty,details, url
         );
         notification_list_gen.push_str(&curr_notif);
     }

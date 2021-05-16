@@ -22,6 +22,18 @@ pub fn complete_html(stub: &str) -> String {
             display:block;
             width:80%;
         }}
+        ul{{
+            padding-left:0px;
+            padding-right:10px;
+        }}
+        li{{
+            list-style-type:none;
+            margin-bottom:10px;
+            border-bottom:1px solid lightgrey;
+        }}
+        summary{{
+            cursor:pointer;
+        }}
         </style>
         </head>
         <body>
