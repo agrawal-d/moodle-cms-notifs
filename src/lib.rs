@@ -247,17 +247,19 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
     let duration = std::time::Duration::from_secs(60 * 10); // 15 minutes
 
     loop {
-        let config = Config::retrieve();
-        let notifs = get_notifications(&config);
+        {
+            let config = Config::retrieve();
+            let notifs = get_notifications(&config);
 
-        match notifs {
-            Ok(notifs) => {
-                display_notifications(notifs, &config);
-            }
-            Err(e) => {
-                display_errors(&config, e);
-            }
-        };
+            match notifs {
+                Ok(notifs) => {
+                    display_notifications(notifs, &config);
+                }
+                Err(e) => {
+                    display_errors(&config, e);
+                }
+            };
+        }
 
         info!("Sleeping for 15 minutes.");
         std::thread::sleep(duration);
