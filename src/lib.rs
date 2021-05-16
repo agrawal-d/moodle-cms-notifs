@@ -43,7 +43,7 @@ pub struct Notification {
 
 impl Config {
     /// Retrieve configuration from JSON file.
-    /// If it does not exists, or is corrupted, create a new configuration.
+    /// If it does not exist, or is corrupted, create a new configuration.
     pub fn retrieve() -> Config {
         let config_exists = Path::new(&Config::get_config_path()).exists();
         let initial_config = Config::get_initial_config();
@@ -242,7 +242,7 @@ pub fn display_errors(config: &Config, err: Box<dyn std::error::Error>) {
 }
 
 /// Run the application in a loop.
-/// Fetches and displays notifications every 15 minutes.
+/// Fetche and display notifications every 15 minutes.
 pub fn run() -> Result<(), Box<dyn std::error::Error>> {
     let duration = std::time::Duration::from_secs(60 * 15); // 15 minutes
 
