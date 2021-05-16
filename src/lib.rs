@@ -244,7 +244,7 @@ pub fn display_errors(config: &Config, err: Box<dyn std::error::Error>) {
 /// Run the application in a loop.
 /// Fetches and displays notifications every 15 minutes.
 pub fn run() -> Result<(), Box<dyn std::error::Error>> {
-    let duration = std::time::Duration::from_secs(60 * 10); // 15 minutes
+    let duration = std::time::Duration::from_secs(60 * 15); // 15 minutes
 
     loop {
         {
