@@ -6,6 +6,8 @@ use crate::api::get_notifications;
 use home;
 use serde::{Deserialize, Serialize};
 use serde_json;
+use std::collections::HashSet;
+use std::env;
 use std::fs;
 use std::path::Path;
 use web_view::*;
@@ -22,6 +24,23 @@ static DEFAULT_MOODLE_LOCATION: &str = "https://cms.bits-hyderabad.ac.in"; // Th
 pub struct Config {
     pub moodle_location: String,
     pub token: String,
+}
+
+struct LaunchConfig {
+    pub silent_errors: bool,
+}
+
+#[macro_use]
+extern crate lazy_static;
+
+// Store relevant CLI args as global statics for later use.
+lazy_static! {
+    static ref LAUNCH_CONFIG: LaunchConfig = {
+        let args: HashSet<String> = env::args().collect();
+        LaunchConfig {
+            silent_errors: args.contains("--silent-errors"),
+        }
+    };
 }
 
 /// The representation of the notification objects returned by Moodle.
@@ -223,6 +242,10 @@ pub fn display_notifications(notifications: Notifications, config: &Config) {
 pub fn display_errors(config: &Config, err: Box<dyn std::error::Error>) {
     let error_message = (*err).to_string();
     error!("{}", error_message);
+
+    if crate::LAUNCH_CONFIG.silent_errors {
+        return;
+    }
 
     let html_stub = format!(
         "

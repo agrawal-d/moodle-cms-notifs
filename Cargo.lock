@@ -88,6 +88,7 @@ name = "cms_notifs"
 version = "0.1.2"
 dependencies = [
  "home",
+ "lazy_static",
  "log",
  "reqwest",
  "serde",

@@ -4,19 +4,23 @@
 extern crate log;
 extern crate simplelog;
 
-use simplelog::*;
-
 use cms_notifs;
 use cms_notifs::run;
 use home;
+use simplelog::*;
+use std::collections::HashSet;
 use std::env;
 use std::fs::File;
 
 // Process the command line arguments.
 fn process_cli_args() {
-    let args: Vec<String> = env::args().collect();
+    let args: HashSet<String> = env::args().collect();
 
-    if args.len() == 2 && args[1] == "--settings" {
+    if args.contains("--silent-errors") {
+        info!("Errors will not show up in an error window. ( Reason: \"--silent-errors\" argument passed. )");
+    }
+
+    if args.contains("--settings") {
         cms_notifs::Config::setup_config(Some(cms_notifs::Config::retrieve()));
         std::process::exit(0);
     } else {
