@@ -21,6 +21,11 @@
 * Fill in the required config details asked.
 * It will run in the background.
 
+## Command Line Arguments
+
+* `--settings` - Opens the settings dialog on startup.
+* `--silent-errors` - Errors wont show up in a GUI window, but will still be logged.
+
 Launch with `--settings` command line argument to open the settings dialog.
 
 ![Settings](images/settings.png)
