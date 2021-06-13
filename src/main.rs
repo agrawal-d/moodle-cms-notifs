@@ -61,6 +61,7 @@ fn setup_logging() {
         ),
     ])
     .unwrap();
+    info!("Storing logs at {}", log_path_raw);
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {

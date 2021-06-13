@@ -67,13 +67,16 @@ impl Config {
         let config_exists = Path::new(&Config::get_config_path()).exists();
         let initial_config = Config::get_initial_config();
         if !config_exists {
+            info!("Config file does not exist, creating a new file.");
             Config::setup_config(Some(initial_config))
         } else {
             let config_raw =
                 fs::read_to_string(&Config::get_config_path()).expect("Unable to read config file");
             if let Ok(config) = serde_json::from_str(&config_raw) {
+                info!("Found a valid config at {}", &Config::get_config_path());
                 config
             } else {
+                info!("Config file at {} is invalid, creating a new one.", &Config::get_config_path());
                 Config::store(&initial_config);
                 Config::setup_config(Some(initial_config))
             }
