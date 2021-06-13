@@ -30,11 +30,23 @@ fn process_cli_args() {
 
 // Configure logging to a file.
 fn setup_logging() {
-    static LOGS_STORE_LOCATION: &str = ".cms_notifs.log"; // The location where the config is stored.
-    let home_dir = home::home_dir().unwrap();
-    let log_dir = home_dir.join(LOGS_STORE_LOCATION);
-    let log_path_raw = log_dir.to_str().unwrap();
 
+    let home_dir = home::home_dir().unwrap();
+
+    let log_dir = match env::consts::OS {
+        "linux" => match env::var_os("XDG_STATE_HOME") {
+            Some(dir) => std::path::PathBuf::from(&dir),
+            None => home_dir.join(".local").join("state"),
+        },
+        _ => home_dir,
+    };
+    std::fs::create_dir_all(&log_dir).unwrap();
+    let log_path = match env::consts::OS {
+        "linux" => log_dir.join("cms_notifs.log"),
+        _ => log_dir.join(".cms_notifs.log"),
+    };
+
+    let log_path_raw = log_path.to_str().unwrap();
     CombinedLogger::init(vec![
         TermLogger::new(
             LevelFilter::Info,

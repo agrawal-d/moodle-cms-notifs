@@ -16,7 +16,6 @@ use webbrowser;
 mod api;
 mod html;
 
-static CONFIG_STORE_LOCATION: &str = ".cms_notifs.json"; // The location where the config is stored.
 static DEFAULT_MOODLE_LOCATION: &str = "https://cms.bits-hyderabad.ac.in"; // The autofilled Moodle endpoint.
 
 /// Application configuration format.
@@ -99,7 +98,20 @@ impl Config {
     /// Get thhe path where the config file should be saved.
     fn get_config_path() -> String {
         let home_dir = home::home_dir().unwrap();
-        let config_path = home_dir.join(CONFIG_STORE_LOCATION);
+
+        let config_dir = match env::consts::OS {
+            "linux" => match env::var_os("XDG_CONFIG_HOME") {
+                Some(dir) => std::path::PathBuf::from(&dir),
+                None => home_dir.join(".config"),
+            },
+            _ => home_dir,
+        };
+        std::fs::create_dir_all(&config_dir).unwrap();
+        let config_path = match env::consts::OS {
+            "linux" => config_dir.join("cms_notifs.json"),
+            _ => config_dir.join(".cms_notifs.json")
+        };
+
         let config_path_raw = config_path.to_str().unwrap();
         String::from(config_path_raw)
     }
