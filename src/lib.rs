@@ -76,7 +76,10 @@ impl Config {
                 info!("Found a valid config at {}", &Config::get_config_path());
                 config
             } else {
-                info!("Config file at {} is invalid, creating a new one.", &Config::get_config_path());
+                info!(
+                    "Config file at {} is invalid, creating a new one.",
+                    &Config::get_config_path()
+                );
                 Config::store(&initial_config);
                 Config::setup_config(Some(initial_config))
             }
@@ -112,7 +115,7 @@ impl Config {
         std::fs::create_dir_all(&config_dir).unwrap();
         let config_path = match env::consts::OS {
             "linux" => config_dir.join("cms_notifs.json"),
-            _ => config_dir.join(".cms_notifs.json")
+            _ => config_dir.join(".cms_notifs.json"),
         };
 
         let config_path_raw = config_path.to_str().unwrap();
@@ -156,17 +159,15 @@ impl Config {
             .resizable(false)
             // .debug(true)
             .user_data(())
-            .invoke_handler(|webview, arg| match arg {
-                _ => {
-                    let (_command, data) = split_once(arg);
-                    let mut config: Config = serde_json::from_str(data).unwrap();
-                    if config.moodle_location.ends_with('/') {
-                        config.moodle_location.pop();
-                    }
-                    Config::store(&config);
-                    webview.exit();
-                    Ok(())
+            .invoke_handler(|webview, arg| {
+                let (_command, data) = split_once(arg);
+                let mut config: Config = serde_json::from_str(data).unwrap();
+                if config.moodle_location.ends_with('/') {
+                    config.moodle_location.pop();
                 }
+                Config::store(&config);
+                webview.exit();
+                Ok(())
             })
             .run()
             .unwrap();
