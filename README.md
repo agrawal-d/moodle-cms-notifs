@@ -30,6 +30,10 @@ Launch with `--settings` command line argument to open the settings dialog.
 
 ![Settings](images/settings.png)
 
+## Location of configuration and log files
+* The config file (containing the token and Moodle URL) is placed at `$XDG_CONFIG_HOME/cms_notifs.json` (default: `~/.config/cms_notifs.json`) on Linux and `~/.cms_notifs.json` on other platforms.
+* The log file is placed at `$XDG_STATE_HOME/cms_notifs.log` (default: `~/.local/state/cms_notifs.log`) on Linux and `~/.cms_notifs.log` on other platforms.
+
 ## Compile from source
 
 * Clone this repository.
