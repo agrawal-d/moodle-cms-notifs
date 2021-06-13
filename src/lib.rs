@@ -95,7 +95,7 @@ impl Config {
             .expect("Failed to write configuration to disk.");
     }
 
-    /// Get thhe path where the config file should be saved.
+    /// Get the path where the config file should be saved.
     fn get_config_path() -> String {
         let home_dir = home::home_dir().unwrap();
 
@@ -290,7 +290,7 @@ pub fn display_errors(config: &Config, err: Box<dyn std::error::Error>) {
 }
 
 /// Run the application in a loop.
-/// Fetche and display notifications every 15 minutes.
+/// Fetch and display notifications every 15 minutes.
 pub fn run() -> Result<(), Box<dyn std::error::Error>> {
     let duration = std::time::Duration::from_secs(60 * 15); // 15 minutes
 
