@@ -76,10 +76,7 @@ impl Config {
                 info!("Found a valid config at {}", &Config::get_config_path());
                 config
             } else {
-                info!(
-                    "Config file at {} is invalid, creating a new one.",
-                    &Config::get_config_path()
-                );
+                info!("Config file at {} is invalid, creating a new one.", &Config::get_config_path());
                 Config::store(&initial_config);
                 Config::setup_config(Some(initial_config))
             }
@@ -115,7 +112,7 @@ impl Config {
         std::fs::create_dir_all(&config_dir).unwrap();
         let config_path = match env::consts::OS {
             "linux" => config_dir.join("cms_notifs.json"),
-            _ => config_dir.join(".cms_notifs.json"),
+            _ => config_dir.join(".cms_notifs.json")
         };
 
         let config_path_raw = config_path.to_str().unwrap();
