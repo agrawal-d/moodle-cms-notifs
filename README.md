@@ -48,6 +48,10 @@ Launch with `--settings` command line argument to open the settings dialog.
 * Better Error handling.
 * Refactor code to be more idiomatic.
 
+## Credits
+
+Thanks to https://github.com/abhijeetviswa/moodle-local_extendednotifs for creating the extended notifications plugin.
+
 ## License
 
 
