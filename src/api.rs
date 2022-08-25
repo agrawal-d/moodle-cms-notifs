@@ -1,5 +1,5 @@
+use crate::ApiResponse;
 use crate::Config;
-use crate::Notifications;
 use reqwest;
 use std::error::Error;
 
@@ -17,23 +17,24 @@ fn tokenize<'a>(endpoint: &'a str, config: &'a Config) -> String {
 }
 
 /// Fetch unread notifications from Moodle.
-pub fn get_notifications(config: &Config) -> Result<Notifications, Box<dyn Error>> {
+pub fn get_notifications(config: &Config) -> Result<ApiResponse, Box<dyn Error>> {
     let endpoint = tokenize(NOTIFS_PARTIAL_ENDPOINT, config);
     let req = reqwest::blocking::get(endpoint)?
         .text()
         .or_else(|err| Err(Box::new(err) as Box<dyn std::error::Error>))?;
     trace!("get_notifications {}", req);
-    let mut notifications: Notifications = (serde_json::from_str(&req)
+    let mut response: ApiResponse = (serde_json::from_str(&req)
         .or_else(|err| Err(Box::new(err) as Box<dyn std::error::Error>)))?;
 
     info!("Fetched notifications from server");
 
-    // Discard old (read) notifications.
-    notifications
-        .notifications
-        .truncate(notifications.unreadcount);
+    if let ApiResponse::Notifications(ref mut notif) = response {
+        notif.notifications.truncate(notif.unreadcount);
+    }
 
-    Ok(notifications)
+    return Ok(response);
+
+    // Discard old (read) notifications.
 }
 
 /// Mark all notifications are read.

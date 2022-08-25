@@ -49,6 +49,20 @@ pub struct Notifications {
     pub unreadcount: usize,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ErrorMessage {
+    pub exception: String,
+    pub errorcode: String,
+    pub message: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(untagged)]
+pub enum ApiResponse {
+    Notifications(Notifications),
+    ErrorMessage(ErrorMessage),
+}
+
 /// A notification object.
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Notification {
@@ -76,7 +90,10 @@ impl Config {
                 info!("Found a valid config at {}", &Config::get_config_path());
                 config
             } else {
-                info!("Config file at {} is invalid, creating a new one.", &Config::get_config_path());
+                info!(
+                    "Config file at {} is invalid, creating a new one.",
+                    &Config::get_config_path()
+                );
                 Config::store(&initial_config);
                 Config::setup_config(Some(initial_config))
             }
@@ -112,7 +129,7 @@ impl Config {
         std::fs::create_dir_all(&config_dir).unwrap();
         let config_path = match env::consts::OS {
             "linux" => config_dir.join("cms_notifs.json"),
-            _ => config_dir.join(".cms_notifs.json")
+            _ => config_dir.join(".cms_notifs.json"),
         };
 
         let config_path_raw = config_path.to_str().unwrap();
@@ -301,9 +318,10 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
             let notifs = get_notifications(&config);
 
             match notifs {
-                Ok(notifs) => {
-                    display_notifications(notifs, &config);
-                }
+                Ok(notifs) => match notifs {
+                    ApiResponse::Notifications(notifs) => display_notifications(notifs, &config),
+                    ApiResponse::ErrorMessage(err) => display_errors(&config, err.message.into()),
+                },
                 Err(e) => {
                     display_errors(&config, e);
                 }
